@@ -17,12 +17,19 @@
 package com.ubiqube.etsi.mano.service;
 
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ubiqube.etsi.mano.dao.mano.BlueZoneGroupInformation;
 import com.ubiqube.etsi.mano.dao.mano.ChangeType;
@@ -35,10 +42,13 @@ import com.ubiqube.etsi.mano.dao.mano.VimComputeResourceFlavourEntity;
 import com.ubiqube.etsi.mano.dao.mano.VimConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.VimSoftwareImageEntity;
 import com.ubiqube.etsi.mano.dao.mano.VimTask;
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionType;
 import com.ubiqube.etsi.mano.dao.mano.common.GeoPoint;
 import com.ubiqube.etsi.mano.dao.mano.v2.Blueprint;
 import com.ubiqube.etsi.mano.dao.mano.v2.ComputeTask;
 import com.ubiqube.etsi.mano.exception.NotFoundException;
+import com.ubiqube.etsi.mano.jpa.ConnectionInformationJpa;
 import com.ubiqube.etsi.mano.service.vim.VimManager;
 
 import ma.glasnost.orika.MapperFacade;
@@ -50,16 +60,21 @@ import ma.glasnost.orika.MapperFacade;
  */
 public abstract class AbstractGrantService implements VimResourceService {
 
+	private static final Logger LOG = LoggerFactory.getLogger(AbstractGrantService.class);
+
 	private final MapperFacade mapper;
 
 	private final ResourceAllocate nfvo;
 
 	private final VimManager vimManager;
 
-	protected AbstractGrantService(final MapperFacade mapper, final ResourceAllocate nfvo, final VimManager vimManager) {
+	private final ConnectionInformationJpa connectionJpa;
+
+	protected AbstractGrantService(final MapperFacade mapper, final ResourceAllocate nfvo, final VimManager vimManager, final ConnectionInformationJpa connectionJpa) {
 		this.mapper = mapper;
 		this.nfvo = nfvo;
 		this.vimManager = vimManager;
+		this.connectionJpa = connectionJpa;
 	}
 
 	@Override
@@ -106,7 +121,30 @@ public abstract class AbstractGrantService implements VimResourceService {
 		mapVimAsset(plan.getTasks(), returnedGrant.getVimAssets());
 		fixUnknownTask(plan.getTasks(), plan.getVimConnections());
 		plan.setVimConnections(fixVimConnections(plan.getVimConnections()));
+		fixContainerBefore431(plan);
 		check(plan);
+	}
+
+	private void fixContainerBefore431(final Blueprint<? extends VimTask, ? extends Instance> plan) {
+		if (plan.getTasks().stream().anyMatch(x -> x.getType() == ResourceTypeEnum.HELM)) {
+			fixGenericConnection(plan, ConnectionType.HELM, plan::setMciopConnectionInfo);
+		}
+		if (plan.getTasks().stream().anyMatch(x -> x.getType() == ResourceTypeEnum.OS_CONTAINER)) {
+			fixGenericConnection(plan, ConnectionType.OCI, plan::setCirConnectionInfo);
+		}
+	}
+
+	private void fixGenericConnection(final Blueprint<? extends VimTask, ? extends Instance> plan, final ConnectionType type, final Consumer<Map<String, ConnectionInformation>> cons) {
+		final Map<String, ConnectionInformation> cirConn = plan.getCirConnectionInfo();
+		if ((null == cirConn) || cirConn.isEmpty()) {
+			return;
+		}
+		final List<ConnectionInformation> cirs = connectionJpa.findByConnType(type);
+		if (cirs.isEmpty()) {
+			LOG.warn("No {} declared in VNFM", type);
+		}
+		final Map<String, ConnectionInformation> map = cirs.stream().collect(Collectors.toMap(ConnectionInformation::getName, Function.identity()));
+		cons.accept(map);
 	}
 
 	protected abstract void check(Blueprint<? extends VimTask, ? extends Instance> plan);

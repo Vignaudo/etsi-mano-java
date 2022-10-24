@@ -17,6 +17,7 @@
 package com.ubiqube.etsi.mano.dao.mano.v2;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.ManyToOne;
@@ -28,6 +29,7 @@ import com.ubiqube.etsi.mano.dao.mano.ExtVirtualLinkDataEntity;
 import com.ubiqube.etsi.mano.dao.mano.Instance;
 import com.ubiqube.etsi.mano.dao.mano.VimConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.ZoneInfoEntity;
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.common.FailureDetails;
 
 /**
@@ -74,4 +76,12 @@ public interface Blueprint<U extends Task, V extends Instance> extends BaseEntit
 	void addVimConnection(VimConnectionInformation vimConnection);
 
 	void addExtVirtualLinks(Set<ExtVirtualLinkDataEntity> extVirtualLinks);
+
+	Map<String, ConnectionInformation> getCirConnectionInfo();
+
+	void setCirConnectionInfo(Map<String, ConnectionInformation> connections);
+
+	Map<String, ConnectionInformation> getMciopConnectionInfo();
+
+	void setMciopConnectionInfo(Map<String, ConnectionInformation> connections);
 }

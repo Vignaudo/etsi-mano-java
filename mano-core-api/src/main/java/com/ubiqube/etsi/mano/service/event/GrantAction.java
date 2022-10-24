@@ -42,6 +42,7 @@ import com.ubiqube.etsi.mano.dao.mano.ExtManagedVirtualLinkDataEntity;
 import com.ubiqube.etsi.mano.dao.mano.GrantResponse;
 import com.ubiqube.etsi.mano.dao.mano.GrantVimAssetsEntity;
 import com.ubiqube.etsi.mano.dao.mano.ImageServiceAware;
+import com.ubiqube.etsi.mano.dao.mano.ResourceTypeEnum;
 import com.ubiqube.etsi.mano.dao.mano.SoftwareImage;
 import com.ubiqube.etsi.mano.dao.mano.VimComputeResourceFlavourEntity;
 import com.ubiqube.etsi.mano.dao.mano.VimConnectionInformation;
@@ -84,14 +85,18 @@ public class GrantAction {
 
 	private final GrantSupport grantSupport;
 
+	private final GrantContainerAction grantContainerAction;
+
 	protected GrantAction(final GrantsResponseJpa grantJpa, final VimManager vimManager, final VimElection vimElection,
-			final SoftwareImageService imageService, final FlavorManager flavorManager, final GrantSupport grantSupport) {
+			final SoftwareImageService imageService, final FlavorManager flavorManager, final GrantSupport grantSupport,
+			final GrantContainerAction grantContainerAction) {
 		this.vimManager = vimManager;
 		this.vimElection = vimElection;
 		this.grantJpa = grantJpa;
 		this.imageService = imageService;
 		this.flavorManager = flavorManager;
 		this.grantSupport = grantSupport;
+		this.grantContainerAction = grantContainerAction;
 	}
 
 	public final void grantRequest(final UUID objectId) {
@@ -203,8 +208,11 @@ public class GrantAction {
 			x.setVimConnectionId(vimInfo.getVimId());
 			x.setZoneId(zoneId);
 			x.setResourceGroupId(zgi.getZoneId().iterator().next());
+			if (x.getType() == ResourceTypeEnum.OS_CONTAINER) {
+				x.setContainerNamespace("mano");
+			}
 		});
-
+		grantContainerAction.handleGrant(grants);
 	}
 
 	private static ZoneInfoEntity mapZone(final String zoneId, final VimConnectionInformation vimInfo) {

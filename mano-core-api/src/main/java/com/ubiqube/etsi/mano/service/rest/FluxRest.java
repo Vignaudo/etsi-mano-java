@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
@@ -76,8 +77,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.ubiqube.etsi.mano.dao.mano.AuthParamOauth2;
 import com.ubiqube.etsi.mano.dao.mano.AuthentificationInformations;
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.config.Servers;
 import com.ubiqube.etsi.mano.exception.GenericException;
+import com.ubiqube.etsi.mano.repository.ManoResource;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -103,6 +106,19 @@ public class FluxRest {
 	public FluxRest(final Servers server) {
 		this.rootUrl = server.getUrl();
 		webClient = createWebClient(server);
+	}
+
+	public static FluxRest of(final ConnectionInformation ci) {
+		final Servers srv = new Servers();
+		srv.setAuthentification(ci.getAuthentification());
+		srv.setCapabilities(ci.getCapabilities());
+		srv.setId(ci.getId());
+		srv.setIgnoreSsl(ci.isIgnoreSsl());
+		srv.setName(ci.getName());
+		srv.setServerStatus(ci.getServerStatus());
+		srv.setTupleVersion(ci.getVersion());
+		srv.setUrl(ci.getUrl());
+		return new FluxRest(srv);
 	}
 
 	private WebClient createWebClient(final Servers server) {
@@ -159,7 +175,7 @@ public class FluxRest {
 		});
 	}
 
-	private ReactiveOAuth2AuthorizedClientProvider getAuthorizedClientProvider(final AuthentificationInformations auth) {
+	private static ReactiveOAuth2AuthorizedClientProvider getAuthorizedClientProvider(final AuthentificationInformations auth) {
 		final SslContext sslContext = buildSslContext(auth.getAuthParamOauth2());
 		final ClientHttpConnector httpConnector = new ReactorClientHttpConnector(getHttpClient(sslContext));
 		final WebClientReactiveClientCredentialsTokenResponseClient accessTokenResponseClient = new WebClientReactiveClientCredentialsTokenResponseClient();
@@ -199,7 +215,7 @@ public class FluxRest {
 		}
 	}
 
-	private HttpClient getHttpClient(final SslContext context) {
+	private static HttpClient getHttpClient(final SslContext context) {
 		return HttpClient.create().doOnRequest((h, c) -> c.addHandlerFirst(new ManoLoggingHandler())).secure(t -> t.sslContext(context));
 	}
 
@@ -330,10 +346,28 @@ public class FluxRest {
 	}
 
 	public void upload(final URI uri, final Path path, final String accept, final String version) {
+		final MultiValueMap<String, ?> multipart = fromPath(path, accept);
+		upload(uri, multipart, version);
+	}
+
+	public void upload(final URI uri, final InputStream is, final String accept, final String version) {
+		final MultiValueMap<String, ?> multipart = fromInputStream(is, accept);
+		upload(uri, multipart, version);
+	}
+
+	public void upload(final URI uri, final ManoResource mr, final String accept, final String version) {
+		try (InputStream is = mr.getInputStream()) {
+			upload(uri, is, accept, version);
+		} catch (final IOException e) {
+			throw new GenericException(e);
+		}
+	}
+
+	public void upload(final URI uri, final MultiValueMap<String, ?> multipartData, final String version) {
 		final RequestHeadersSpec<?> wc = webClient.put()
 				.uri(uri)
 				.contentType(MediaType.MULTIPART_FORM_DATA)
-				.body(BodyInserters.fromMultipartData(fromPath(path, accept)));
+				.body(BodyInserters.fromMultipartData(multipartData));
 		if (null != version) {
 			wc.header(VERSION, version);
 		}
@@ -345,6 +379,12 @@ public class FluxRest {
 	private static MultiValueMap<String, ?> fromPath(final Path path, final String accept) {
 		final MultipartBodyBuilder builder = new MultipartBodyBuilder();
 		builder.part("file", new FileSystemResource(path), MediaType.valueOf(accept));
+		return builder.build();
+	}
+
+	private static MultiValueMap<String, ?> fromInputStream(final InputStream is, final String accept) {
+		final MultipartBodyBuilder builder = new MultipartBodyBuilder();
+		builder.part("file", new InputStreamResource(is), MediaType.valueOf(accept));
 		return builder.build();
 	}
 

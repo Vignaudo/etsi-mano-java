@@ -29,6 +29,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
+import com.ubiqube.etsi.mano.dao.mano.ImageServiceAware;
 import com.ubiqube.etsi.mano.dao.mano.SoftwareImage;
 
 import lombok.Getter;
@@ -42,7 +43,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class OsContainer implements Serializable {
+public class OsContainer implements ImageServiceAware, Serializable {
 	/** Serial. */
 	private static final long serialVersionUID = 1L;
 
@@ -74,4 +75,12 @@ public class OsContainer implements Serializable {
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	private Map<String, SoftwareImage> artifacts;
+
+	@Override
+	public SoftwareImage getSoftwareImage() {
+		if (null == artifacts) {
+			return null;
+		}
+		return artifacts.entrySet().iterator().next().getValue();
+	}
 }

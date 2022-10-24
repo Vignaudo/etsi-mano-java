@@ -202,6 +202,8 @@ public class GrantInformationExt implements BaseEntity, Serializable {
 	@OneToOne
 	private SnapshotResourceDefinitionEntity snapshotResDef;
 
+	private String containerNamespace;
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

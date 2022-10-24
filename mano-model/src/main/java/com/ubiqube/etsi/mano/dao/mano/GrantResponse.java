@@ -37,6 +37,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.validation.Valid;
 
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.grant.PlacementConstraint;
 import com.ubiqube.etsi.mano.dao.mano.grant.VimConstraint;
 import com.ubiqube.etsi.mano.utils.ToStringUtil;
@@ -141,7 +142,13 @@ public class GrantResponse implements BaseEntity, Auditable, GrantInterface {
 
 	@Valid
 	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
-	private Set<VimConnectionInformation> vimConnections;
+	private Set<VimConnectionInformation> vimConnections = new LinkedHashSet<>();
+
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> cirConnectionInfo = new HashMap<>();
+
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> mciopRepositoryInfo = new HashMap<>();
 
 	/**
 	 * From Grant.

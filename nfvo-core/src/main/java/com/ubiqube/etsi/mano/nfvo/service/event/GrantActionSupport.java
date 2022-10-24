@@ -42,6 +42,7 @@ import com.ubiqube.etsi.mano.dao.mano.VnfPackage;
 import com.ubiqube.etsi.mano.dao.mano.VnfStorage;
 import com.ubiqube.etsi.mano.dao.mano.common.ListKeyPair;
 import com.ubiqube.etsi.mano.dao.mano.nsd.ForwarderMapping;
+import com.ubiqube.etsi.mano.dao.mano.pkg.OsContainer;
 import com.ubiqube.etsi.mano.dao.mano.v2.nfvo.NsBlueprint;
 import com.ubiqube.etsi.mano.dao.mano.v2.nfvo.NsVirtualLinkTask;
 import com.ubiqube.etsi.mano.dao.mano.v2.nfvo.NsVnfTask;
@@ -102,6 +103,13 @@ public class GrantActionSupport implements GrantSupport {
 		final GrantResponse grant = grantJpa.findById(objectId).orElseThrow();
 		final VnfPackage pkg = vnfPackageService.findByVnfdId(UUID.fromString(grant.getVnfdId()));
 		return pkg.getVnfStorage();
+	}
+
+	@Override
+	public Set<OsContainer> getOsContainer(final UUID objectId) {
+		final GrantResponse grant = grantJpa.findById(objectId).orElseThrow();
+		final VnfPackage pkg = vnfPackageService.findByVnfdId(UUID.fromString(grant.getVnfdId()));
+		return pkg.getOsContainer();
 	}
 
 	private VimConnectionInformation electVim(final String vnfPackageVimId, final GrantResponse grantResponse, final VnfPackage vnfPackage) {
@@ -268,5 +276,4 @@ public class GrantActionSupport implements GrantSupport {
 		final QuotaNeeded needed = summarizeResources(grants, vnfPackage);
 		return preVimSelection.selectVims(vnfPackage, grants, needed);
 	}
-
 }

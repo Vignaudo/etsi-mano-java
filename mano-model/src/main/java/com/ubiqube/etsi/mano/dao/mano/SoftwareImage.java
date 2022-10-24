@@ -27,6 +27,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 
 import com.ubiqube.etsi.mano.dao.mano.common.Checksum;
 
@@ -61,11 +62,13 @@ public class SoftwareImage implements Auditable {
 	@Embedded
 	private Checksum checksum;
 
+	@Nullable
 	@Enumerated(EnumType.STRING)
 	private ContainerFormatType containerFormat;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
-	private DiskFormatType diskFormat;
+	private DiskFormatType diskFormat = DiskFormatType.QCOW2;
 
 	@Nullable
 	private Long minDisk;
@@ -89,6 +92,9 @@ public class SoftwareImage implements Auditable {
 
 	@Nullable
 	private String architecture;
+
+	@Nullable
+	private String repository;
 
 	private Audit audit;
 

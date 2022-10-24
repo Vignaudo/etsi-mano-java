@@ -26,6 +26,7 @@ import com.ubiqube.etsi.mano.dao.mano.GrantResponse;
 import com.ubiqube.etsi.mano.dao.mano.VimConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.VnfCompute;
 import com.ubiqube.etsi.mano.dao.mano.VnfStorage;
+import com.ubiqube.etsi.mano.dao.mano.pkg.OsContainer;
 import com.ubiqube.etsi.mano.service.vim.Vim;
 
 /**
@@ -39,6 +40,8 @@ public interface GrantSupport {
 
 	@Nonnull
 	Set<VnfStorage> getVnfStorage(UUID objectId);
+
+	Set<OsContainer> getOsContainer(UUID objectId);
 
 	List<VimConnectionInformation> getVims(GrantResponse grants);
 

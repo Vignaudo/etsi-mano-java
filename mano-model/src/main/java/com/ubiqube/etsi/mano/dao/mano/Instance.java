@@ -40,6 +40,7 @@ import javax.persistence.Version;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.pm.PmJob;
 import com.ubiqube.etsi.mano.dao.mano.v2.BlueprintParameters;
 import com.ubiqube.etsi.mano.dao.mano.v2.VnfBlueprint;
@@ -105,6 +106,11 @@ public class Instance implements BaseEntity, Auditable {
 	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH })
 	private Set<VimConnectionInformation> vimConnectionInfo = new LinkedHashSet<>();
 
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> cirConnectionInfo;
+
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> mciopRepositoryInfo;
 	/**
 	 * Additional VNF-specific attributes that provide the current values of the
 	 * configurable properties of the VNF instance. These attributes represent
@@ -160,7 +166,7 @@ public class Instance implements BaseEntity, Auditable {
 	 */
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "vnfInstance")
 	private Set<ExtManagedVirtualLinkDataEntity> extManagedVirtualLinks;
-	
+
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "vnfInstance")
 	private Set<PmJob> pmJobs;
 

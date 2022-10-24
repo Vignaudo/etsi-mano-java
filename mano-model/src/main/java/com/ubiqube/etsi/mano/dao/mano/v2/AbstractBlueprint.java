@@ -17,17 +17,22 @@
 package com.ubiqube.etsi.mano.dao.mano.v2;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToMany;
 import javax.persistence.MappedSuperclass;
 
 import com.ubiqube.etsi.mano.dao.mano.Audit;
 import com.ubiqube.etsi.mano.dao.mano.Auditable;
 import com.ubiqube.etsi.mano.dao.mano.CancelModeTypeEnum;
 import com.ubiqube.etsi.mano.dao.mano.Instance;
+import com.ubiqube.etsi.mano.dao.mano.cnf.ConnectionInformation;
 import com.ubiqube.etsi.mano.dao.mano.common.FailureDetails;
 
 import lombok.Getter;
@@ -64,4 +69,10 @@ public abstract class AbstractBlueprint<U extends Task, V extends Instance> impl
 
 	@Enumerated(EnumType.STRING)
 	private CancelModeTypeEnum cancelMode;
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> cirConnectionInfo;
+
+	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+	private Map<String, ConnectionInformation> mciopConnectionInfo;
+
 }
