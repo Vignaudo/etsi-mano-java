@@ -15,7 +15,7 @@
 	<properties>
 		<maven.compiler.target>17</maven.compiler.target>
 		<maven.compiler.source>17</maven.compiler.source>
-		<ubiqube.grpc.version>1.51.1</ubiqube.grpc.version>
+		<ubiqube.grpc.version>1.53.0</ubiqube.grpc.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
